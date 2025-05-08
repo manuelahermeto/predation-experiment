@@ -43,7 +43,7 @@ summary(m1)
 paiwise.m1 <- emmeans(m1, list(pairwise ~ id_treatment))
 paiwise.m1
 
-#Análises considerando 3 tratamentos (predation_data1)
+##Análises considerando 3 tratamentos (predation_data1)----
 
 m2 <- glmer(predation ~ treatment + (1 | individual_code),
             data = predation_data1,
@@ -101,17 +101,19 @@ predation_data1 %>%
 predation_data3 <- predation_data1 %>%
   filter(lost != 1)
 
-#Rodar o modelo considerando predation_data3----
-m3 <- glmer(predation ~ treatment + (1 | individual_code),
-            data = predation_data3,
-            family = binomial)
-summary(m3)
+####atualização: predation_data3 não foi salvo, então predation_data4 é o df sem lagartas não predadas
 
-pairwise.m3 <- emmeans(m3, list(pairwise ~ treatment))
-pairwise.m3
+#Rodar o modelo considerando predation_data3----
+m4 <- glmer(predation ~ treatment + (1 | individual_code),
+            data = predation_data4,
+            family = binomial)
+summary(m4)
+
+pairwise.m4 <- emmeans(m4, list(pairwise ~ treatment))
+pairwise.m4
 
 ### Calcular a porcentagem de predação por tratamento----
-porcentagem_predacao <- predation_data3 %>%
+porcentagem_predacao <- predation_data4 %>%
   group_by(treatment) %>%
   summarise(
     total = n(),                               # Total de indivíduos por tratamento
@@ -253,7 +255,7 @@ dados_long %>%
 
 ##contagem absoluta de predação por bird
 dados_long %>%
-  filter(guild == "bird") %>%
+  filter(guilda == "bird") %>%
   group_by(treatment) %>%
   summarise(
     total_obs = n(),
@@ -286,9 +288,9 @@ summary(m2)
 plot(m2)
 
 ##Números absolutos de cada guilda - geom_point() e position_jitter----
-ggplot(dados_long2, aes(x = treatment, y = presence, color = guild)) +
+ggplot(dados_long2, aes(x = treatment, y = presence, color = guilda)) +
   geom_point(position = position_jitter(width = 0.2, height = 0.05), alpha = 0.6, size = 1) +
-  facet_wrap(~ guild) +
+  facet_wrap(~ guilda) +
   theme_minimal()
 
 ##Proporção média de cada guilda---- #salvar gráfico como "fig1"
@@ -304,7 +306,7 @@ fig1=ggplot(dados_long2, aes(x = treatment, y = presence, color = guild)) +
   theme_minimal()
 
 ##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
-em2 <- emmeans(m2, ~ guild * treatment, type = "response")
+em2 <- emmeans(m2, ~ guilda * treatment, type = "response")
 summary(em2)
 
 pairs(em2, adjust = "tukey")
@@ -329,7 +331,7 @@ pairs_df <- as.data.frame(pairs)
 ## Salve como CSV
 write.csv(pairs_df, file = "tukeytest.csv", row.names = FALSE)
 
-#Salvar RData
+#Salvar RData----
 save.image("analyses_predation_paraty.RData")
 
 #3.Predation by multiple guilds in different treatments----
