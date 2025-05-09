@@ -32,16 +32,16 @@ predation_data2 <- predation_data1 %>%
 write.csv(predation_data2, "C:/Users/ERIKA/Downloads/Manuela/predation-experiment/predation_data2.csv", row.names = FALSE)
 
 #Análises considerando 5 tratamentos (predation_data2)
-
-m1 <- glmer(predation ~ id_treatment + (1 | individual_code),
+#Não utilizado
+*m1 <- glmer(predation ~ id_treatment + (1 | individual_code),
             data = predation_data2,
             family = binomial)
-summary(m1)
+*summary(m1)
 
 #Testando as diferenças entre as réplicas
 
-paiwise.m1 <- emmeans(m1, list(pairwise ~ id_treatment))
-paiwise.m1
+*paiwise.m1 <- emmeans(m1, list(pairwise ~ id_treatment))
+*paiwise.m1
 
 ##Análises considerando 3 tratamentos (predation_data1)----
 
@@ -280,7 +280,7 @@ dados_long2 <- dados_long %>%
   filter(guild != "reptile")
 
 #Gerar novo modelo
-m2 <- glm(presence ~ guild * treatment,
+m2 <- glm(presence ~ guilda * treatment,
           data = dados_long2,
           family = binomial)
 
@@ -293,7 +293,7 @@ ggplot(dados_long2, aes(x = treatment, y = presence, color = guilda)) +
   facet_wrap(~ guilda) +
   theme_minimal()
 
-##Proporção média de cada guilda---- #salvar gráfico como "fig1"
+##Proporção média de cada guilda---- #salvar gráfico como "fig1"----
 fig1=ggplot(dados_long2, aes(x = treatment, y = presence, color = guild)) +
   stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
   stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
@@ -304,6 +304,47 @@ fig1=ggplot(dados_long2, aes(x = treatment, y = presence, color = guild)) +
     x = ""
   ) +
   theme_minimal()
+
+#teste - adicionando imagens no gráfico fig1----
+library(ggplot2)
+library(ggtext)
+library(dplyr)
+
+# Colocar o endereço das imagens
+guild_images <- c(
+  "bird" = "<img src='images/bird.png' width='40'/>",
+  "mammal" = "<img src='images/mammal.png' width='40'/>",
+  "arthropod" = "<img src='images/arthropod.png' width='40'/>"
+)
+
+# Add new column with the image HTML for facet labels
+dados_long2 <- dados_long2 %>%
+  mutate(guild_label = guild_images[guilda])
+
+# Criar o gráfico com as imagens como título (facet label)
+fig1 <- ggplot(dados_long2, aes(x = treatment, y = presence, color = guilda)) +
+  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+  facet_wrap(~ guild_label) +  # Use the new column with images as facet labels
+  labs(
+    y = "Predation frequency (mean ± SD)",
+    x = "",
+    color = "Guild"  # Keeps guild name in the legend
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_markdown(size = 16)  # This enables HTML rendering in the facet labels
+  )
+
+fig1
+
+#aumentar fonte do texto
++ theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_markdown(size = 16),
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 16)
+  )
 
 ##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
 em2 <- emmeans(m2, ~ guilda * treatment, type = "response")
@@ -317,9 +358,16 @@ pairs(em2, adjust = "tukey")
 #22 = arthropod forest / bird forest
 #23 = arthropod forest / mammal forest
 
-#Visualizar os resultados e salvar o gráfico como "fig_m2"
+##Visualizar os resultados e salvar o gráfico como "fig_m2"----
 fig_m2=plot(em2, comparisons = FALSE) #FALSE = sem setas / TRUE = com setas
 fig_m2
+
+library(ggplot2)
+#aumenta a fonte
+fig_m2 + 
+  theme(
+   axis.text = element_text(size = 13),
+  )
 
 ##Salvar o pairs em csv----
 ## Execute a comparação de pares
