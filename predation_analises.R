@@ -292,6 +292,10 @@ tukeym2_df <- as.data.frame(tukey_testm2)
 ## Salve como CSV
 write.csv(tukeym2_df, file = "tukeytest_m2.csv", row.names = FALSE)
 
+#Ler csv
+library(readr)
+tukey_testm2 <- read_csv("tukeytest_m2.csv")
+
 ##Visualizar os resultados e salvar o gráfico como "fig2_m2"----
 fig2_m2=plot(em2, comparisons = FALSE) #FALSE = sem setas / TRUE = com setas
 fig2_m2
