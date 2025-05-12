@@ -8,6 +8,8 @@ library("lme4")    # glmer and drop1
 library("dplyr")   # put forest in order 
 library("emmeans") # emmeans
 library("DHARMa")  # test residual
+library("ggplot2")
+library("ggtext")
 
 #load RData----
 load("analyses_predation_paraty.RData")
@@ -28,21 +30,21 @@ str(predation_data1)
 
 #Agrupando colunas "treatment" e "treatment.number"
 #Não utilizado
-*predation_data2 <- predation_data1 %>%
-      *mutate(id_treatment = paste(treatment, treatment.number, sep = "_"))
-*write.csv(predation_data2, "C:/Users/ERIKA/Downloads/Manuela/predation-experiment/predation_data2.csv", row.names = FALSE)
+#predation_data2 <- predation_data1 %>%
+#      *mutate(id_treatment = paste(treatment, treatment.number, sep = "_"))
+#write.csv(predation_data2, "C:/Users/ERIKA/Downloads/Manuela/predation-experiment/predation_data2.csv", row.names = FALSE)
 
 #Análises considerando 5 tratamentos (predation_data2)
 #Não utilizado
-*m1 <- glmer(predation ~ id_treatment + (1 | individual_code),
-            data = predation_data2,
-            family = binomial)
-*summary(m1)
+#m1 <- glmer(predation ~ id_treatment + (1 | individual_code),
+#           data = predation_data2,
+#           family = binomial)
+#summary(m1)
 
 #Testando as diferenças entre as réplicas
 
-*paiwise.m1 <- emmeans(m1, list(pairwise ~ id_treatment))
-*paiwise.m1
+#paiwise.m1 <- emmeans(m1, list(pairwise ~ id_treatment))
+#paiwise.m1
 
 ##Análises considerando 3 tratamentos (m1)----
 ###Exclusão de lagartas "lost = 1"----
@@ -52,6 +54,10 @@ m1 <- glmer(predation ~ treatment + (1 | individual_code),
             family = binomial)
 
 summary(m1)
+
+#m1 <- glmer(predation ~ treatment + sampling_effort + (1 | individual_code),
+data = predation_data1,
+family = binomial)
 
 ##Testando as diferenças entre as réplicas----
 
@@ -107,23 +113,23 @@ ggplot(porcentagem_predacao, aes(x = treatment, y = porcentagem, fill = treatmen
 
 ##Juntar grupos em "guild"----
 #Não utilizado pois inclui reptiles
-*all_guilds <- predation_data1 %>%
-  pivot_longer(
-    cols = c(mammal, reptile, bird, arthropod),
-    names_to = "guild",
-    values_to = "presence"
-  )
+#all_guilds <- predation_data1 %>%
+# pivot_longer(
+#    cols = c(mammal, reptile, bird, arthropod),
+#    names_to = "guild",
+#    values_to = "presence"
+#  )
 
 ##Análise com modelo binomial
 #NÃO UTILIZADO
-*m <- glm(presence ~ guild * treatment,
-              data = predation_data2,
-              family = binomial)
+#m <- glm(presence ~ guild * treatment,
+#              data = predation_data2,
+#              family = binomial)
 
-summary(m)
+#summary(m)
 
 ##Frequência de cada guilda por tratamento
-*predation_data2 %>%
+predation_data2 %>%
   count(treatment, guild) %>%
   ggplot(aes(x = treatment, y = n, fill = guild)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -131,44 +137,44 @@ summary(m)
   theme_minimal()
 
 ##Testando outlier
-*install.packages("car")
-*library(car)
-*outlierTest(m1) # testa observações com resíduos studentizados extremos
+#install.packages("car")
+#library(car)
+#outlierTest(m1) # testa observações com resíduos studentizados extremos
 #resultado: a observação 937 teve o maior resíduo studentizado (~2.96), com valor-p sem correção de 0.003
 
 ##Investigar a observação 937
-*dados_long[937, ]
+#dados_long[937, ]
 #Outlier tem uma explicação biológica: única predação por mamífero na restauração
 
 
 ##gráfico geom_jitter por guilda
-*ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
-  geom_jitter(width = 0.2, height = 0.05, alpha = 0.6, size = 2) +
-  labs(
-    title = "Presença de grupos de predadores por ambiente",
-    y = "Presença (1 = sim)",
-    x = "Ambiente"
-  ) +
-  facet_wrap(~ guild) +
-  theme_minimal()
+#ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
+#  geom_jitter(width = 0.2, height = 0.05, alpha = 0.6, size = 2) +
+#  labs(
+#    title = "Presença de grupos de predadores por ambiente",
+#    y = "Presença (1 = sim)",
+#    x = "Ambiente"
+#  ) +
+#  facet_wrap(~ guild) +
+#  theme_minimal()
 
 ##geom_point() e position_jitter
-*ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
-  geom_point(position = position_jitter(width = 0.2, height = 0.05), alpha = 0.6, size = 2) +
-  facet_wrap(~ guild) +
-  theme_minimal()
+#ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
+#  geom_point(position = position_jitter(width = 0.2, height = 0.05), alpha = 0.6, size = 2) +
+#  facet_wrap(~ guild) +
+#  theme_minimal()
 
 ##proporções esperadas por tratamento: stat_summary()
-*ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
-  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
-  facet_wrap(~ guild) +
-  labs(
-    title = "Proporção média de predação por guilda e tratamento",
-    y = "Frequência média de presença",
-    x = "Tratamento"
-  ) +
-  theme_minimal()
+#ggplot(dados_long, aes(x = treatment, y = presence, color = guild)) +
+#  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+#  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+#  facet_wrap(~ guild) +
+#  labs(
+#    title = "Proporção média de predação por guilda e tratamento",
+#    y = "Frequência média de presença",
+#    x = "Tratamento"
+#  ) +
+#  theme_minimal()
 
 ##Frequência média só de bird----
 all_guilds %>%
@@ -210,12 +216,20 @@ predation_data2 <- all_guilds %>%
   filter(guild != "reptile")
 
 #Gerar novo modelo (m2)----
-m2 <- glm(presence ~ guild * treatment,
-          data = predation_data2,
-          family = binomial)
+
+m2 <- glmer(presence ~ guild * treatment + (1|individual_code), 
+            data = predation_data2, 
+            family = binomial)
 
 summary(m2)
 plot(m2)
+
+##Criar as quatro colunas de sampling effort na tabela predation_data2!----
+
+#Adicionar sampling effort
+m2 <- glm(presence ~ guild * treatment + sampling_effort + (1|individual_code),
+          data = predation_data2,
+          family = binomial)
 
 ##Números absolutos de cada guilda - geom_point() e position_jitter----
 ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
@@ -244,9 +258,9 @@ library(dplyr)
 
 #Colocar o endereço das imagens
 guild_images <- c(
-  "bird" = "<img src='images/bird.png' width='40'/>",
-  "mammal" = "<img src='images/mammal.png' width='40'/>",
-  "arthropod" = "<img src='images/arthropod.png' width='40'/>"
+  "bird" = "<img src='images/pteroglossus.png' width='40'/>",
+  "mammal" = "<img src='images/mammals.png' width='40'/>",
+  "arthropod" = "<img src='images/formicophorms.png' width='40'/>"
 )
 
 # Adiciona coluna com HTML da imagem pro facet labels
@@ -257,18 +271,26 @@ predation_data2 <- predation_data2 %>%
 fig1_m2 <- ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
   stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
   stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
-  facet_wrap(~ guild_label) +  # Use the new column with images as facet labels
+  facet_wrap(~ guild_label) +
   labs(
     y = "Predation frequency (mean ± SD)",
     x = "",
-    color = "Guild"  # Keeps guild name in the legend
+    color = "Guild"
   ) +
+  scale_x_discrete(labels = c(
+    "agroforestry" = "A",
+    "forest" = "F",
+    "restauration" = "R"
+  )) +
   theme_minimal(base_size = 14) +
   theme(
-    strip.text = element_markdown(size = 16)  # This enables HTML rendering in the facet labels
+    strip.text = element_markdown(size = 16),
+    axis.text.x = element_text(size = 16)
   )
 
 fig1_m2
+
+axis.text.x = element_text(size = 16)  # ou outro valor maior
 
 ##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
 em2 <- emmeans(m2, ~ guild * treatment, type = "response")
@@ -282,7 +304,7 @@ pairs(em2, adjust = "tukey")
 #22 = arthropod forest / bird forest
 #23 = arthropod forest / mammal forest
 
-##Salvar o pairs em csv----
+##Salvar o pairs em csv (tukey_testm2)----
 ## Execute a comparação de pares
 tukey_testm2 <- pairs(em2, adjust = "tukey")
 
@@ -310,23 +332,23 @@ fig2_m2 +
 #Salvar RData----
 save.image("analyses_predation_paraty.RData")
 
-*#3.Predation by multiple guilds in different treatments----
+#3.Predation by multiple guilds in different treatments----
 #Model 3: multiple ~ treatment + ( 1 | individual_code)----
 #Não utilizado
 
 ## GLM com família quasipoisson (melhor se há overdispersion)
-*m3 <- glm(multiple ~ treatment, data = predation_data4, family = quasipoisson)
+#m3 <- glm(multiple ~ treatment, data = predation_data4, family = quasipoisson)
 
-*summary(m3)
-*anova(m3, test = "F")  # ANOVA para avaliar efeito de treatment
+#summary(m3)
+#anova(m3, test = "F")  # ANOVA para avaliar efeito de treatment
 
 # Obter emmeans
-*em3 <- emmeans(m3, ~ treatment)
+#em3 <- emmeans(m3, ~ treatment)
 
 # Comparações de pares com ajuste Tukey
-*pairs_m3 <- pairs(em3, adjust = "tukey")
-*summary(pairs_m3)
+#pairs_m3 <- pairs(em3, adjust = "tukey")
+#summary(pairs_m3)
 
-*plot(m3)
+#plot(m3)
 
 #m3 não será usado por apenas 6 lagartas tiveram multiple = 2----
