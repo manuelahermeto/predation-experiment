@@ -8,8 +8,9 @@ library("lme4")    # glmer and drop1
 library("dplyr")   # put forest in order 
 library("emmeans") # emmeans
 library("DHARMa")  # test residual
-library("ggplot2")
-library("ggtext")
+library("ggplot2") #plot visuals
+library("ggtext") #change text in ggplot
+library(readr) #read csv
 
 #load RData----
 load("analyses_predation_paraty.RData")
@@ -56,8 +57,8 @@ m1 <- glmer(predation ~ treatment + (1 | individual_code),
 summary(m1)
 
 #m1 <- glmer(predation ~ treatment + sampling_effort + (1 | individual_code),
-data = predation_data1,
-family = binomial)
+#data = predation_data1,
+#family = binomial)
 
 ##Testando as diferenças entre as réplicas----
 
@@ -70,9 +71,6 @@ tukey_testm1 <- emmeans(m1, pairwise ~ treatment, adjust = "tukey")
 tukey_testm1
 
 plot(m1)
-
-library(dplyr)
-library(ggplot2)
 
 ##Um gráfico para cada tratamento----
 predation_data1 %>%
@@ -98,15 +96,20 @@ porcentagem_predacao <- predation_data1 %>%
     porcentagem = (predados / total) * 100      # Calcula a porcentagem
   )
 
-## Gráfico de barras com porcentagem por tratamento----
-ggplot(porcentagem_predacao, aes(x = treatment, y = porcentagem, fill = treatment)) +
+## Gráfico de barras com porcentagem por tratamento (fig1_m1)----
+fig1_m1<-ggplot(porcentagem_predacao, aes(x = treatment, y = porcentagem, fill = treatment)) +
   geom_bar(stat = "identity", width = 0.7) +
   geom_text(aes(label = paste0(round(porcentagem, 1), "%")), 
             vjust = -0.5, size = 4) +
   theme_minimal() +
-  labs(x = "Tratamento", y = "Predação (%)", title = "Porcentagem de Predação por Tratamento") +
-  theme(legend.position = "none")
+  labs(x = "", y = "Predation (%)", title = "") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 13), 
+    axis.title.y = element_text(size = 14)
+  )
 
+fig1_m1
 
 #2.Predation by different guilds in different treatments----
 #Model 2: guild ~ treatment + ( 1 | individual_code)----
@@ -215,21 +218,66 @@ all_guilds %>%
 predation_data2 <- all_guilds %>%
   filter(guild != "reptile")
 
+#Excluir lagarta id = 11----
+predation_data2 <- predation_data2[predation_data2$n. != 11, ]
+
 #Gerar novo modelo (m2)----
 
 m2 <- glmer(presence ~ guild * treatment + (1|individual_code), 
             data = predation_data2, 
             family = binomial)
-
+#Com o novo modelo "glmer" m2 está dando erro Model failed to converge with max|grad| = 0.00459466 (tol = 0.002, component 1)
 summary(m2)
 plot(m2)
 
-##Criar as quatro colunas de sampling effort na tabela predation_data2!----
+##Criar as quatro colunas de sampling effort na tabela predation_data2----
 
-#Adicionar sampling effort
-m2 <- glm(presence ~ guild * treatment + sampling_effort + (1|individual_code),
-          data = predation_data2,
-          family = binomial)
+#Coluna "sampling_effort_euterpe" de nº de açaí para 3 tratamentos----
+predation_data2 <- predation_data2 %>%
+  mutate(sampling_effort_euterpe = case_when(
+    treatment == "forest" ~ 11,
+    treatment == "agroforestry" ~ 10,
+    treatment == "restoration" ~ 5,
+    TRUE ~ NA_real_
+  ))
+
+#Coluna "sampling_effort_caterpillar" de nº de lagartas para 3 tratamentos----
+predation_data2 <- predation_data2 %>%
+  mutate(sampling_effort_caterpillar = case_when(
+    treatment == "forest" ~ 110,
+    treatment == "agroforestry" ~ 100,
+    treatment == "restoration" ~ 50,
+    TRUE ~ NA_real_
+  ))
+
+#Coluna "total_se_euterpe" de nº de açaí para 5 tratamentos----
+predation_data2 <- predation_data2 %>%
+  mutate(total_se_euterpe = case_when(
+    treatment_number == "forest1" ~ 5,
+    treatment_number == "forest2" ~ 6,
+    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 5,
+    TRUE ~ NA_real_
+  ))
+
+#Coluna "total_se_caterpillar" de nº de lagartas para 5 tratamentos----
+predation_data2 <- predation_data2 %>%
+  mutate(total_se_caterpillar = case_when(
+    treatment_number == "forest1" ~ 50,
+    treatment_number == "forest2" ~ 60,
+    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 50,
+    TRUE ~ NA_real_
+  ))
+
+#Adicionar "sampling_effort_euterpe" no modelo
+#m2 <- glmer(presence ~ guild * treatment + sampling_effort_euterpe + (1 | individual_code),
+#            data = predation_data2,
+#            family = binomial)
+
+#Resultado de adicionar a covariável:
+#fixed-effect model matrix is rank deficient so dropping 1 column / coefficient 
+#(há redundância entre variáveis)
+#In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,:Model failed to converge with max|grad| = 0.00459466 (tol = 0.002, component 1) 
+#o algoritmo de otimização não conseguiu encontrar um ponto estável para os parâmetros
 
 ##Números absolutos de cada guilda - geom_point() e position_jitter----
 ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
@@ -238,55 +286,52 @@ ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
   theme_minimal()
 
 ##Proporção média de cada guilda---- #salvar gráfico como "fig1_m2"----
-fig1_m2=ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
-  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
-  facet_wrap(~ guild) +
-  labs(
-    title = "",
-    y = "Predation frequency (mean ± SD)",
-    x = ""
-  ) +
-  theme_minimal()
+#fig1_m2=ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
+#  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+#  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+#  facet_wrap(~ guild) +
+#  labs(
+#    title = "",
+#    y = "Predation frequency (mean ± SD)",
+#    x = ""
+#  ) +
+#  theme_minimal()
 
 fig1_m2
 
 #teste - adicionando imagens no gráfico fig1_m2----
-library(ggplot2)
-library(ggtext)
-library(dplyr)
 
 #Colocar o endereço das imagens
-guild_images <- c(
+#guild_images <- c(
   "bird" = "<img src='images/pteroglossus.png' width='40'/>",
   "mammal" = "<img src='images/mammals.png' width='40'/>",
   "arthropod" = "<img src='images/formicophorms.png' width='40'/>"
 )
 
 # Adiciona coluna com HTML da imagem pro facet labels
-predation_data2 <- predation_data2 %>%
-  mutate(guild_label = guild_images[guild])
+#predation_data2 <- predation_data2 %>%
+#  mutate(guild_label = guild_images[guild])
 
 # Criar o gráfico com as imagens como título (facet label)
-fig1_m2 <- ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
-  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
-  facet_wrap(~ guild_label) +
-  labs(
-    y = "Predation frequency (mean ± SD)",
-    x = "",
-    color = "Guild"
-  ) +
-  scale_x_discrete(labels = c(
-    "agroforestry" = "A",
-    "forest" = "F",
-    "restauration" = "R"
-  )) +
-  theme_minimal(base_size = 14) +
-  theme(
-    strip.text = element_markdown(size = 16),
-    axis.text.x = element_text(size = 16)
-  )
+#fig1_m2 <- ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
+#  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+#  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+#  facet_wrap(~ guild_label) +
+#  labs(
+#    y = "Predation frequency (mean ± SD)",
+#    x = "",
+#    color = "Guild"
+#  ) +
+#  scale_x_discrete(labels = c(
+#    "agroforestry" = "A",
+#    "forest" = "F",
+#    "restauration" = "R"
+#  )) +
+#  theme_minimal(base_size = 14) +
+#  theme(
+#    strip.text = element_markdown(size = 16),
+#    axis.text.x = element_text(size = 16)
+#  )
 
 fig1_m2
 
@@ -315,14 +360,12 @@ tukeym2_df <- as.data.frame(tukey_testm2)
 write.csv(tukeym2_df, file = "tukeytest_m2.csv", row.names = FALSE)
 
 #Ler csv
-library(readr)
 tukey_testm2 <- read_csv("tukeytest_m2.csv")
 
 ##Visualizar os resultados e salvar o gráfico como "fig2_m2"----
 fig2_m2=plot(em2, comparisons = FALSE) #FALSE = sem setas / TRUE = com setas
 fig2_m2
 
-library(ggplot2)
 #aumenta a fonte
 fig2_m2 + 
   theme(
