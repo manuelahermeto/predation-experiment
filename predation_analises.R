@@ -226,13 +226,12 @@ predation_data2 <- predation_data2[predation_data2$n. != 11, ]
 m2 <- glmer(presence ~ guild * treatment + (1|individual_code), 
             data = predation_data2, 
             family = binomial)
-#Com o novo modelo "glmer" m2 está dando erro Model failed to converge with max|grad| = 0.00459466 (tol = 0.002, component 1)
 summary(m2)
 plot(m2)
 
 ##Criar as quatro colunas de sampling effort na tabela predation_data2----
 
-#Coluna "sampling_effort_euterpe" de nº de açaí para 3 tratamentos----
+#Coluna "sampling_effort_euterpe" de nº de açaí para 3 tratamentos
 predation_data2 <- predation_data2 %>%
   mutate(sampling_effort_euterpe = case_when(
     treatment == "forest" ~ 11,
@@ -241,7 +240,7 @@ predation_data2 <- predation_data2 %>%
     TRUE ~ NA_real_
   ))
 
-#Coluna "sampling_effort_caterpillar" de nº de lagartas para 3 tratamentos----
+#Coluna "sampling_effort_caterpillar" de nº de lagartas para 3 tratamentos
 predation_data2 <- predation_data2 %>%
   mutate(sampling_effort_caterpillar = case_when(
     treatment == "forest" ~ 110,
@@ -250,7 +249,7 @@ predation_data2 <- predation_data2 %>%
     TRUE ~ NA_real_
   ))
 
-#Coluna "total_se_euterpe" de nº de açaí para 5 tratamentos----
+#Coluna "total_se_euterpe" de nº de açaí para 5 tratamentos
 predation_data2 <- predation_data2 %>%
   mutate(total_se_euterpe = case_when(
     treatment_number == "forest1" ~ 5,
@@ -259,7 +258,7 @@ predation_data2 <- predation_data2 %>%
     TRUE ~ NA_real_
   ))
 
-#Coluna "total_se_caterpillar" de nº de lagartas para 5 tratamentos----
+#Coluna "total_se_caterpillar" de nº de lagartas para 5 tratamentos
 predation_data2 <- predation_data2 %>%
   mutate(total_se_caterpillar = case_when(
     treatment_number == "forest1" ~ 50,
@@ -268,16 +267,10 @@ predation_data2 <- predation_data2 %>%
     TRUE ~ NA_real_
   ))
 
-#Adicionar "sampling_effort_euterpe" no modelo
+#Adicionar "sampling_effort_euterpe" no modelo (NÃO UTILIZADO)
 #m2 <- glmer(presence ~ guild * treatment + sampling_effort_euterpe + (1 | individual_code),
 #            data = predation_data2,
 #            family = binomial)
-
-#Resultado de adicionar a covariável:
-#fixed-effect model matrix is rank deficient so dropping 1 column / coefficient 
-#(há redundância entre variáveis)
-#In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,:Model failed to converge with max|grad| = 0.00459466 (tol = 0.002, component 1) 
-#o algoritmo de otimização não conseguiu encontrar um ponto estável para os parâmetros
 
 ##Números absolutos de cada guilda - geom_point() e position_jitter----
 ggplot(predation_data2, aes(x = treatment, y = presence, color = guild)) +
