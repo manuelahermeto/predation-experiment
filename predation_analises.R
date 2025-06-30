@@ -10,7 +10,7 @@ library("emmeans") # emmeans
 library("DHARMa")  # test residual
 library("ggplot2") #plot visuals
 library("ggtext") #change text in ggplot
-library(readr) #read csv
+library("readr") #read csv
 
 #load RData----
 load("analyses_predation_paraty.RData")
@@ -368,23 +368,21 @@ fig2_m2 +
 #Salvar RData----
 save.image("analyses_predation_paraty.RData")
 
-#3.Predation by multiple guilds in different treatments----
-#Model 3: multiple ~ treatment + ( 1 | individual_code)----
-#Não utilizado
+#3.Traits: Number of fruiting Euterpe edulis in each buffer----
 
-## GLM com família quasipoisson (melhor se há overdispersion)
-#m3 <- glm(multiple ~ treatment, data = predation_data4, family = quasipoisson)
+#Filtrar só Euterpe_edulis no frutos_buffer e selecionar colunas relevantes
+euterpe_df <- frutos_buffer %>%
+  filter(species == "Euterpe_edulis") %>%
+  select(individual_code, n_individuals)
 
-#summary(m3)
-#anova(m3, test = "F")  # ANOVA para avaliar efeito de treatment
+#Fazer o left_join para adicionar a coluna no predation_data2
+predation_data2 <- predation_data2 %>%
+  left_join(euterpe_df, by = "individual_code") %>%
+  rename(fruiting_euterpe = n_individuals)
 
-# Obter emmeans
-#em3 <- emmeans(m3, ~ treatment)
-
-# Comparações de pares com ajuste Tukey
-#pairs_m3 <- pairs(em3, adjust = "tukey")
-#summary(pairs_m3)
-
-#plot(m3)
-
-#m3 não será usado por apenas 6 lagartas tiveram multiple = 2----
+#Modelo 3 com fruiting_euterpe como covariável----
+m3 <- glmer(presence ~ guild * treatment + fruiting_euterpe + (1|individual_code), 
+            data = predation_data2, 
+            family = binomial)
+summary(m3)
+plot(m3)
