@@ -114,7 +114,7 @@ fig1_m1
 #2.Predation by different guilds in different treatments----
 #Model 2: guild ~ treatment + ( 1 | individual_code)----
 
-##Juntar grupos em "guild"----
+##Juntar grupos em "guild"
 #Não utilizado pois inclui reptiles
 #all_guilds <- predation_data1 %>%
 # pivot_longer(
@@ -232,40 +232,40 @@ plot(m2)
 ##Criar as quatro colunas de sampling effort na tabela predation_data2----
 
 #Coluna "sampling_effort_euterpe" de nº de açaí para 3 tratamentos
-predation_data2 <- predation_data2 %>%
-  mutate(sampling_effort_euterpe = case_when(
-    treatment == "forest" ~ 11,
-    treatment == "agroforestry" ~ 10,
-    treatment == "restoration" ~ 5,
-    TRUE ~ NA_real_
-  ))
+#predation_data2 <- predation_data2 %>%
+#  mutate(sampling_effort_euterpe = case_when(
+#    treatment == "forest" ~ 11,
+#    treatment == "agroforestry" ~ 10,
+#    treatment == "restoration" ~ 5,
+#    TRUE ~ NA_real_
+#  ))
 
 #Coluna "sampling_effort_caterpillar" de nº de lagartas para 3 tratamentos
-predation_data2 <- predation_data2 %>%
-  mutate(sampling_effort_caterpillar = case_when(
-    treatment == "forest" ~ 110,
-    treatment == "agroforestry" ~ 100,
-    treatment == "restoration" ~ 50,
-    TRUE ~ NA_real_
-  ))
+#predation_data2 <- predation_data2 %>%
+#  mutate(sampling_effort_caterpillar = case_when(
+#    treatment == "forest" ~ 110,
+#    treatment == "agroforestry" ~ 100,
+#    treatment == "restoration" ~ 50,
+#    TRUE ~ NA_real_
+#  ))
 
 #Coluna "total_se_euterpe" de nº de açaí para 5 tratamentos
-predation_data2 <- predation_data2 %>%
-  mutate(total_se_euterpe = case_when(
-    treatment_number == "forest1" ~ 5,
-    treatment_number == "forest2" ~ 6,
-    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 5,
-    TRUE ~ NA_real_
-  ))
+#predation_data2 <- predation_data2 %>%
+#  mutate(total_se_euterpe = case_when(
+#    treatment_number == "forest1" ~ 5,
+#    treatment_number == "forest2" ~ 6,
+#    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 5,
+#    TRUE ~ NA_real_
+#  ))
 
 #Coluna "total_se_caterpillar" de nº de lagartas para 5 tratamentos
-predation_data2 <- predation_data2 %>%
-  mutate(total_se_caterpillar = case_when(
-    treatment_number == "forest1" ~ 50,
-    treatment_number == "forest2" ~ 60,
-    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 50,
-    TRUE ~ NA_real_
-  ))
+#predation_data2 <- predation_data2 %>%
+#  mutate(total_se_caterpillar = case_when(
+#    treatment_number == "forest1" ~ 50,
+#    treatment_number == "forest2" ~ 60,
+#    treatment_number %in% c("agroforestry1", "agroforestry2", "restoration1") ~ 50,
+#    TRUE ~ NA_real_
+#  ))
 
 #Adicionar "sampling_effort_euterpe" no modelo (NÃO UTILIZADO)
 #m2 <- glmer(presence ~ guild * treatment + sampling_effort_euterpe + (1 | individual_code),
@@ -386,3 +386,138 @@ m3 <- glmer(presence ~ guild * treatment + fruiting_euterpe + (1|individual_code
             family = binomial)
 summary(m3)
 plot(m3)
+
+#Repetir as análises para dados de frugivoria----
+# read the data (que está em .csv)
+frugivory_data1 <- read.csv("paraty_experimento_frugivoria_2023.csv",header = TRUE)
+# Data come from the csv called 'paraty_experimento_frugivoria_2023.csv'
+str(predation_data1)
+
+# 1. Frugivory incidence in different treatments----
+
+# Model: frugivory ~ treatment + ( 1 | individual_code)----
+
+##Análises considerando 3 tratamentos (m1)----
+###Exclusão de frutos "lost = 1"----
+
+f1 <- glmer(frugivory ~ treatment + (1 | individual_code),
+            data = frugivory_data1,
+            family = binomial)
+
+summary(f1)
+
+##Testando as diferenças entre as réplicas----
+
+pairwise.f1 <- emmeans(f1, list(pairwise ~ treatment))
+pairwise.f1
+
+##Teste de Tukey----
+
+tukey_testf1 <- emmeans(f1, pairwise ~ treatment, adjust = "tukey")
+tukey_testf1
+
+plot(f1)
+
+#N de indivíduos por tratamento
+frugivory_data1 %>%
+  group_by(treatment) %>%
+  summarise(numero_individuos = n_distinct(individual_code))
+
+### Calcular a porcentagem de frugivoria por tratamento----
+porcentagem_frugivoria <- frugivory_data1 %>%
+  group_by(treatment) %>%
+  summarise(
+    total = n(),                               # Total de indivíduos por tratamento
+    consumidos = sum(frugivory == 1),             # Quantos foram consumidos (frugivory == 1)
+    porcentagem = (consumidos / total) * 100      # Calcula a porcentagem
+  )
+
+## Gráfico de barras com porcentagem por tratamento (fig1_f1)----
+fig1_f1<-ggplot(porcentagem_frugivoria, aes(x = treatment, y = porcentagem, fill = treatment)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_text(aes(label = paste0(round(porcentagem, 1), "%")), 
+            vjust = -0.5, size = 4) +
+  theme_minimal() +
+  labs(x = "", y = "Frugivory (%)", title = "") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 13), 
+    axis.title.y = element_text(size = 14)
+  )
+
+fig1_f1
+
+#2.Frugivory by different guilds in different treatments----
+#Model 2: guild ~ treatment + ( 1 | individual_code)----
+
+#Excluir répteis----
+frugivory_data1 <- all_guilds %>%
+  filter(guild != "reptile")
+
+#Gerar novo modelo (f2)----
+
+f2 <- glmer(presence ~ guild * treatment + (1|individual_code), 
+            data = frugivory_data1, 
+            family = binomial)
+summary(f2)
+plot(f2)
+
+##Proporção média de cada guilda---- #salvar gráfico como "fig1_f2"----
+
+# Adiciona coluna com HTML da imagem pro facet labels
+frugivory_data1 <- frugivory_data1 %>%
+  mutate(guild_label = guild_images[guild])
+
+# Criar o gráfico com as imagens como título (facet label)
+fig1_f2 <- ggplot(frugivory_data1, aes(x = treatment, y = presence, color = guild)) +
+  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+  facet_wrap(~ guild_label) +
+  labs(
+    y = "Frugivory frequency (mean ± SD)",
+    x = "",
+    color = "Guild"
+  ) +
+  scale_x_discrete(labels = c(
+    "agroforestry" = "A",
+    "forest" = "F",
+    "restauration" = "R"
+  )) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_markdown(size = 16),
+        axis.text.x = element_text(size = 16)
+  )
+
+fig1_f2
+
+axis.text.x = element_text(size = 16)  # ou outro valor maior
+
+##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
+ef2 <- emmeans(f2, ~ guild * treatment, type = "response")
+summary(ef2)
+
+pairs(ef2, adjust = "tukey")
+
+##Salvar o pairs em csv (tukey_testf2)----
+## Execute a comparação de pares
+tukey_testf2 <- pairs(ef2, adjust = "tukey")
+
+## Converta para data frame
+tukeyf2_df <- as.data.frame(tukey_testf2)
+
+## Salve como CSV
+write.csv(tukeyf2_df, file = "tukeytest_f2.csv", row.names = FALSE)
+
+#Ler csv
+tukey_testf2 <- read_csv("tukeytest_f2.csv")
+
+##Visualizar os resultados e salvar o gráfico como "fig2_f2"----
+fig2_f2=plot(ef2, comparisons = FALSE) #FALSE = sem setas / TRUE = com setas
+
+#aumenta a fonte
+fig2_f2 + 
+  theme(
+    axis.text = element_text(size = 13),
+  )
+fig2_f2
