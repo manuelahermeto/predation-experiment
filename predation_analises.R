@@ -387,6 +387,8 @@ m3 <- glmer(presence ~ guild * treatment + fruiting_euterpe + (1|individual_code
 summary(m3)
 plot(m3)
 
+plot(boxplot(fruiting_euterpe ~ treatment, data = predation_data2))
+
 #Repetir as análises para dados de frugivoria----
 # read the data (que está em .csv)
 frugivory_data1 <- read.csv("paraty_experimento_frugivoria_2023.csv",header = TRUE)
