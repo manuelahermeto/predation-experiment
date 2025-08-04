@@ -1,23 +1,7 @@
 
-f2test <- lm(presence ~ guild * treatment, data = frugivory_data1)
-
-test <- emmeans(f2, ~ guild | treatment, 
-                at = list(guild = c("arthropod","bird","mammal"), 
-                          treatment = c("agroforestry","forest","restauration")))
-plot(test)
-
-test <- emmeans(f2, ~ guild | treatment,
-                at = list(guild = c("arthropod", "bird", "mammal"), 
-                          treatment = c("agroforestry", "forest", "restauration")),
-                vcov. = vcov(f2, full = FALSE))
-plot(test)
-
-
-ef2test <- emmeans(f2, ~ guild | treatment, type = "response")
+em2test <- emmeans(f2, ~ guild | treatment, type = "response")
 summary(ef2test)
 plot(ef2test)
-
-library(ggplot2)
 
 # Converter emmeans para data frame
 ef2testdf <- as.data.frame(ef2test)
@@ -68,7 +52,8 @@ ggplot(ef2testdf, aes(y = guild, x = prob, color = guild, group = guild)) +
         legend.position = "none")  # remove a legenda
 
 #### Agrupar por guilda
-ggplot(ef2testdf, aes(y = treatment, x = prob, color = treatment, group = treatment)) +
+#Colocar tratamentos na ordem
+ggplot(em2testdf, aes(y = treatment, x = prob, color = treatment, group = treatment)) +
   geom_point(position = position_dodge(width = 0.3), size = 3) +
   geom_errorbarh(aes(xmin = asymp.LCL, xmax = asymp.UCL),
                  position = position_dodge(width = 0.3),
@@ -78,20 +63,33 @@ ggplot(ef2testdf, aes(y = treatment, x = prob, color = treatment, group = treatm
   scale_x_continuous(limits = c(0, 0.8)) +
   labs(x = NULL, y = NULL) +
   facet_grid(guild ~ ., scales = "fixed", switch = "x") +
-  theme_gray() +
+  theme_gray(base_size = 18) +  # ⬅️ Aumenta a fonte geral
   theme(strip.placement = "outside",
         strip.background = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.x = element_text(angle = 0, hjust = 1),
         legend.position = "none")
 
 
 
 
 
-
-
-
-
+em2df$treatment_order <- factor(em2df$treatment_order,
+                                    levels = c("agroforestry", "restauration", "forest"))
+ggplot(em2df, aes(y = treatment_order, x = prob, color = treatment_order, group = treatment_order)) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = asymp.LCL, xmax = asymp.UCL),
+                 height = 0.2,
+                 size = 1.2,
+                 alpha = 0.5) +
+  scale_x_continuous(limits = c(0, 0.8)) +
+  scale_y_discrete(limits = levels(em2df$treatment_order)) +  
+  labs(x = NULL, y = NULL) +
+  facet_grid(guild ~ ., scales = "fixed", switch = "x") +
+  theme_gray(base_size = 18) +
+  theme(strip.placement = "outside",
+        strip.background = element_blank(),
+        axis.text.x = element_text(angle = 0, hjust = 1),
+        legend.position = "none")
 
 
 
