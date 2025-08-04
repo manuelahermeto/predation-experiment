@@ -124,12 +124,6 @@ fig1_m2
 dev.off()
 
 ##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
-#em2 <- emmeans(m2, ~ guild | treatment, type = "response")
-#summary(em2)
-
-                                               #pairs(em2, adjust = "tukey")
-
-#em2df <- as.data.frame(em2)
 
 ##Salvar o pairs em csv (tukey_testm2)----
 ## Execute a comparação de pares
@@ -144,11 +138,35 @@ write.csv(tukeym2_df, file = "tukeytest_m2.csv", row.names = FALSE)
 #Ler csv
 tukey_testm2 <- read_csv("tukeytest_m2.csv")
 
-##Visualizar os resultados e salvar o gráfico como "fig2_m2"----
+##Gráfico como "fig2_m2"----
+em2 <- emmeans(m2, ~ guild | treatment, type = "response")
+
+em2df <- as.data.frame(em2)
+summary(em2df)
+
+#Colocar tratamentos em ordem
+em2df$treatment_order <- factor(em2df$treatment_order,
+                                levels = c("agroforestry", "restauration", "forest"))
+
+#Gráfico fig2_m2
 pdf("fig2_m2.pdf", width = 10, height = 6, pointsize = 12)
 png("fig2_m2.png", width = 10, height = 6, units = 'in', res=300)
 
-#plot(em2, comparisons = FALSE)   #FALSE = sem setas / TRUE = com setas #Não utilizado
+ggplot(em2df, aes(y = treatment_order, x = prob, color = treatment_order, group = treatment_order)) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = asymp.LCL, xmax = asymp.UCL),
+                 height = 0.2,
+                 size = 1.2,
+                 alpha = 0.5) +
+  scale_x_continuous(limits = c(0, 0.8)) +
+  scale_y_discrete(limits = levels(em2df$treatment_order)) +  
+  labs(x = NULL, y = NULL) +
+  facet_grid(guild ~ ., scales = "fixed", switch = "x") +
+  theme_gray(base_size = 18) +
+  theme(strip.placement = "outside",
+        strip.background = element_blank(),
+        axis.text.x = element_text(angle = 0, hjust = 1),
+        legend.position = "none")
 
 fig2_m2
 dev.off()
@@ -230,7 +248,7 @@ summary(f2)
 #Colocar o endereço das imagens
 guild_images <- c(
   "bird" = "<img src='images/bird.png' width='40'/>",
-  "mammal" = "<img src='images/mammal.png' width='40'/>",
+  "mammal" = "<img src='images/mammal.png' width='45'/>",
   "arthropod" = "<img src='images/formicophorms.png' width='40'/>"
 )
 
@@ -246,7 +264,7 @@ png("fig1_f2.png", width = 10, height = 6, units = 'in', res=300)
 frugivory_data1$treatment <- factor(frugivory_data1$treatment,
                                     levels = c("forest", "restauration", "agroforestry"))
 
-#Gráfico
+#Gráfico fig1_f2
 ggplot(frugivory_data1, aes(x = treatment, y = presence, color = guild)) +
   stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
   stat_summary(fun.data = mean_cl_boot, geom = "errorbar",
@@ -295,26 +313,38 @@ write.csv(tukeyf2_df, file = "tukeytest_f2.csv", row.names = FALSE)
 tukey_testf2 <- read_csv("tukeytest_f2.csv")
 
 ##Visualizar os resultados e salvar o gráfico como "fig2_f2"----
-#fig2_f2=plot(ef2, comparisons = FALSE) #FALSE = sem setas / TRUE = com setas
 pdf("fig2_f2.pdf", width = 10, height = 6, pointsize = 12)
 png("fig2_f2.png", width = 10, height = 6, units = 'in', res=300)
 
-ggplot(ef2testdf, aes(y = treatment, x = prob, color = treatment, group = treatment)) +
-  geom_point(position = position_dodge(width = 0.3), size = 3) +
+#Gráfico fig2_f2
+ef2 <- emmeans(f2, ~ guild | treatment, type = "response")
+
+ef2df <- as.data.frame(ef2)
+summary(ef2df)
+
+#Colocar tratamentos em ordem
+ef2df$treatment <- factor(ef2df$treatment,
+                          levels = c("agroforestry", "restauration", "forest"))
+
+#Gráfico fig2_m2
+pdf("fig2_f2.pdf", width = 10, height = 6, pointsize = 12)
+png("fig2_f2.png", width = 10, height = 6, units = 'in', res=300)
+
+ggplot(ef2df, aes(y = treatment, x = prob, color = treatment, group = treatment)) +
+  geom_point(size = 3) +
   geom_errorbarh(aes(xmin = asymp.LCL, xmax = asymp.UCL),
-                 position = position_dodge(width = 0.3),
                  height = 0.2,
                  size = 1.2,
                  alpha = 0.5) +
   scale_x_continuous(limits = c(0, 0.8)) +
+  scale_y_discrete(limits = levels(ef2df$treatment)) +  
   labs(x = NULL, y = NULL) +
   facet_grid(guild ~ ., scales = "fixed", switch = "x") +
-  theme_gray(base_size = 18) +  # ⬅️ Aumenta a fonte geral
+  theme_gray(base_size = 18) +
   theme(strip.placement = "outside",
         strip.background = element_blank(),
         axis.text.x = element_text(angle = 0, hjust = 1),
         legend.position = "none")
 
 fig2_f2
-
 dev.off()
