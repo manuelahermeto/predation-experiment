@@ -78,8 +78,8 @@ summary(m2)
 
 #Colocar o endereço das imagens e agrupar em "guild_images1"
 guild_images1 <- c(
-  "bird" = "<img src='images/pteroglossus.png' width='40'/>",
-  "mammal" = "<img src='images/mammals.png' width='40'/>",
+  "bird" = "<img src='images/bird.png' width='40'/>",
+  "mammal" = "<img src='images/mammal.png' width='45'/>",
   "arthropod" = "<img src='images/formicophorms.png' width='40'/>"
 )
 
@@ -91,9 +91,17 @@ predation_data1 <- predation_data1 %>%
 pdf("fig1_m2.pdf", width = 10, height = 6, pointsize = 12)
 png("fig1_m2.png", width = 10, height = 6, units = 'in', res=300)
 
-ggplot(predation_data1, aes(x = treatment, y = presence, color = guild)) +
+# Definir ordem dos tratamentos
+predation_data1$treatment <- factor(predation_data1$treatment,
+                                    levels = c("forest", "restauration", "agroforestry"))
+#Gráfico
+fig1_m2 <- ggplot(predation_data1, aes(x = treatment, y = presence, color = guild)) +
   stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar",
+               width = 0.2, 
+               size = 1.2, 
+               alpha = 0.5, 
+               position = position_dodge(width = 0.5)) +
   facet_wrap(~ guild_label) +
   labs(
     y = "Predation frequency (mean ± SD)",
@@ -101,25 +109,27 @@ ggplot(predation_data1, aes(x = treatment, y = presence, color = guild)) +
     color = "Guild"
   ) +
   scale_x_discrete(labels = c(
-    "agroforestry" = "A",
     "forest" = "F",
-    "restauration" = "R"
+    "restauration" = "R",
+    "agroforestry" = "A"
   )) +
   theme_minimal(base_size = 14) +
   theme(
     strip.text = element_markdown(size = 16),
     axis.text.x = element_text(size = 16)
   )
-
+                   
 fig1_m2
 
 dev.off()
 
 ##Análise post-hoc para entender quais combinações de fatores são significativamente diferentes entre si----
-em2 <- emmeans(m2, ~ guild * treatment, type = "response")
-summary(em2)
+#em2 <- emmeans(m2, ~ guild | treatment, type = "response")
+#summary(em2)
 
-pairs(em2, adjust = "tukey")
+                                               #pairs(em2, adjust = "tukey")
+
+#em2df <- as.data.frame(em2)
 
 ##Salvar o pairs em csv (tukey_testm2)----
 ## Execute a comparação de pares
@@ -138,7 +148,7 @@ tukey_testm2 <- read_csv("tukeytest_m2.csv")
 pdf("fig2_m2.pdf", width = 10, height = 6, pointsize = 12)
 png("fig2_m2.png", width = 10, height = 6, units = 'in', res=300)
 
-plot(em2, comparisons = FALSE)   #FALSE = sem setas / TRUE = com setas
+#plot(em2, comparisons = FALSE)   #FALSE = sem setas / TRUE = com setas #Não utilizado
 
 fig2_m2
 dev.off()
@@ -219,8 +229,8 @@ summary(f2)
 
 #Colocar o endereço das imagens
 guild_images <- c(
-  "bird" = "<img src='images/pteroglossus.png' width='40'/>",
-  "mammal" = "<img src='images/mammals.png' width='40'/>",
+  "bird" = "<img src='images/bird.png' width='40'/>",
+  "mammal" = "<img src='images/mammal.png' width='40'/>",
   "arthropod" = "<img src='images/formicophorms.png' width='40'/>"
 )
 
@@ -232,9 +242,18 @@ frugivory_data1 <- frugivory_data1 %>%
 pdf("fig1_f2.pdf", width = 10, height = 6, pointsize = 12)
 png("fig1_f2.png", width = 10, height = 6, units = 'in', res=300)
 
+# Definir ordem dos tratamentos
+frugivory_data1$treatment <- factor(frugivory_data1$treatment,
+                                    levels = c("forest", "restauration", "agroforestry"))
+
+#Gráfico
 ggplot(frugivory_data1, aes(x = treatment, y = presence, color = guild)) +
   stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar",
+               width = 0.2, 
+               size = 1.2, 
+               alpha = 0.5, 
+               position = position_dodge(width = 0.5)) +
   facet_wrap(~ guild_label) +
   labs(
     y = "Frugivory frequency (mean ± SD)",
@@ -242,14 +261,14 @@ ggplot(frugivory_data1, aes(x = treatment, y = presence, color = guild)) +
     color = "Guild"
   ) +
   scale_x_discrete(labels = c(
-    "agroforestry" = "A",
     "forest" = "F",
-    "restauration" = "R"
+    "restauration" = "R",
+    "agroforestry" = "A"
   )) +
-  theme_minimal(base_size = 16) +
+  theme_minimal(base_size = 14) +
   theme(
-    strip.text = element_markdown(size = 19),
-    axis.text.x = element_text(size = 19)
+    strip.text = element_markdown(size = 16),
+    axis.text.x = element_text(size = 16)
   )
 
 fig1_f2
@@ -290,10 +309,10 @@ ggplot(ef2testdf, aes(y = treatment, x = prob, color = treatment, group = treatm
   scale_x_continuous(limits = c(0, 0.8)) +
   labs(x = NULL, y = NULL) +
   facet_grid(guild ~ ., scales = "fixed", switch = "x") +
-  theme_gray() +
+  theme_gray(base_size = 18) +  # ⬅️ Aumenta a fonte geral
   theme(strip.placement = "outside",
         strip.background = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.x = element_text(angle = 0, hjust = 1),
         legend.position = "none")
 
 fig2_f2
