@@ -9,6 +9,8 @@ library("DHARMa")  # test residual
 library("ggplot2") #plot visuals
 library("ggtext") #change text in ggplot
 library("readr") #read csv
+library("gridExtra")
+library("grid")
 
 # Ler os dados (que está em .csv)
 predation_data1 <- read.csv("paraty_experimento_predacao_2023.csv",header = TRUE)
@@ -96,7 +98,8 @@ predation_data1$treatment <- factor(predation_data1$treatment,
                                     levels = c("forest", "restauration", "agroforestry"))
 #Gráfico
 fig1_m2 <- ggplot(predation_data1, aes(x = treatment, y = presence, color = guild)) +
-  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.5)) +
+  stat_summary(fun = mean, geom = "point", 
+               size = 3, position = position_dodge(width = 0.5)) +
   stat_summary(fun.data = mean_cl_boot, geom = "errorbar",
                width = 0.2, 
                size = 1.2, 
